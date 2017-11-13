@@ -23,12 +23,12 @@ app = flask.Flask(__name__)
 
 @app.route('/')
 def home_page():
-    with open("/Users/samfunk/ds/metis/project_fletcher/nlp_page.html",'r') as viz_file:
+    with open("/Users/samfunk/ds/metis/project_fletcher/app/nlp_page.html",'r') as viz_file:
         return viz_file.read()
 
 @app.route('/d3_week', methods=['GET', 'POST'])
 def d3_week_page():
-    with open("/Users/samfunk/ds/metis/project_fletcher/d3_line_chart.html", 'r') as d3_file:
+    with open("/Users/samfunk/ds/metis/project_fletcher/app/d3_line_chart.html", 'r') as d3_file:
         return d3_file.read()
 
 @app.route('/week_records.csv')
