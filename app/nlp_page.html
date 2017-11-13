@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.6.0/d3.js"></script>
+  <style>
+    .axis-x path {
+      stroke: #000;
+    }
+
+    .line {
+      fill: none;
+      stroke-width: 1.5px;
+      stroke-linejoin: "round";
+      stroke-linecap: "round";
+    }
+
+    .line:hover {
+      stroke-width: 6px;
+    }
+  </style>
+  <!-- Include Required Prerequisites -->
+  <script type="text/javascript" src="//cdn.jsdelivr.net/jquery/1/jquery.min.js"></script>
+  <script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap/3/css/bootstrap.css" />
+
+  <!-- Include Date Range Picker -->
+  <script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
+  <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
+
+  <script type="text/javascript">
+    var topics = ["Valuation", "IPO/SEO", "Recommendations", "Biotechnology", "Capital Markets", "Energy", "Management", "Earnings", "Federal Reserve", "Retail", "Technology", "Mergers & Acquisitions", "Debt Offerings", "Corporate Strategy",
+      "Job Market"
+    ];
+
+    $(document).ready(function() {
+      $("#daterange").daterangepicker({
+        startDate: "10/01/2017",
+        endDate: "10/31/2017",
+        minDate: '01/01/2013',
+        maxDate: moment(),
+        showDropdowns: true,
+        showWeekNumbers: false,
+        timePicker: false,
+        linkedCalendars: false,
+        opens: 'right',
+        buttonClasses: ['btn btn-default'],
+        applyClass: 'btn-small btn-primary',
+        cancelClass: 'btn-small',
+        format: 'MM/DD/YYYY',
+        locale: {
+          format: 'MM/DD/YYYY',
+        }
+      });
+
+      for (var i = 0; i < topics.length; i++) {
+        $("#topic").append('<option value=' + i + '>' + topics[i] + '</option>');
+      };
+
+    });
+
+    function postData() {
+      var start = $("#daterange").val().slice(0, 10);
+      var end = $("#daterange").val().slice(13, 23);
+      var topic = document.getElementById("topic").value;
+
+      $.ajax({
+        type: "POST",
+        contentType: "application/json; charset=utf-8",
+        url: "/api",
+        datatype: "json",
+        async: true,
+        data: "{\"startDate\": \"" + start + "\", \"endDate\": \"" + end + "\", \"topic\": \"" + topic + "\"}",
+        success: function(result) {
+
+          document.getElementById("title").textContent = result['title'];
+          document.getElementById("text").textContent = result["text"];
+          document.getElementById("top3").textContent = result["top3"][0] + ", " + result["top3"][1] + ", " + result["top3"][2];
+        }
+      })
+    };
+  </script>
+</head>
+
+<body style="margin-top: 10px; margin-left: 10px; margin-right: 10px; margin-bottom: 10px; padding:0">
+  <center>
+    <h1>Financial News Trends</h1>
+    <i>Visit /d3_week for topic trends chart</i>
+    <br>
+    <img src="https://fm.cnbc.com/applications/cnbc.com/resources/img/editorial/2015/01/06/102314625-CBOE_Traders.530x298.jpg?v=1497633897" width="500" />
+
+    <div class="date-container">
+      <h2>Enter your date range</h2>
+      <input type="text" id="daterange" style="width:200px;" />
+      <br><br>
+      <img src="http://static4.businessinsider.com/image/54d2a8ea69bedd404ecf6dfb/the-cme-will-close-most-of-its-open-outcry-trading-pits-by-this-summer.jpg" width="500" />
+    </div>
+    <div class="topic-container">
+      <h2>Enter your topic</h2>
+      <select id="topic">
+      <option>Choose a topic</option>
+      <option value=-1>All</option>j
+    </select>
+
+      <br><br>
+      <img src="http://i.dailymail.co.uk/i/pix/2015/07/06/04/2A429E9100000578-0-image-a-31_1436151967247.jpg" width="500" />
+
+    </div>
+    <div class="results">
+      <br>
+      <input type="button" onclick="postData()" value="Get Some Results!">
+      <br>
+      <h3>Title: </h3>
+      <h4 id="title"></h4>
+
+      <h3>Text: </h3>
+      <h4 id="text"></h4>
+
+      <h3>Top 3 Topics: </h3>
+      <h4 id="top3"></h4>
+
+    </div>
+  </center>
+</body>

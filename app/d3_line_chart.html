@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.6.0/d3.js"></script>
+  <style>
+    .axis-x path {
+      stroke: #000;
+    }
+
+    .line {
+      fill: none;
+      stroke-width: 1.5px;
+      stroke-linejoin: "round";
+      stroke-linecap: "round";
+    }
+
+    .line:hover {
+      stroke-width: 6px;
+    }
+  </style>
+  <!-- Include Required Prerequisites -->
+  <script type="text/javascript" src="//cdn.jsdelivr.net/jquery/1/jquery.min.js"></script>
+  <script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap/3/css/bootstrap.css" />
+
+  <!-- Include Date Range Picker -->
+  <script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
+  <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
+
+  <script type="text/javascript">
+    var topics = ["Valuation", "IPO", "Recommendations", "Biotechnology", "Capital Markets", "Energy", "Management", "Earnings", "Federal Reserve", "Retail", "Technology", "Mergers & Acquisitions", "Debt Offerings", "Corporate Strategy",
+      "Job Market"
+    ];
+
+    $(document).ready(function() {
+      $("#daterange").daterangepicker({
+        startDate: '05/01/2017',
+        endDate: '11/03/2017',
+        minDate: '01/01/2013',
+        maxDate: moment(),
+        showDropdowns: true,
+        showWeekNumbers: false,
+        timePicker: false,
+        linkedCalendars: false,
+        opens: 'center',
+        buttonClasses: ['btn btn-default'],
+        applyClass: 'btn-small btn-primary',
+        cancelClass: 'btn-small',
+        format: 'MM/DD/YYYY',
+        locale: {
+          format: 'MM/DD/YYYY',
+        }
+      });
+
+      for (var i = 0; i < topics.length; i++) {
+        $("#topic").append('<option value=' + i + '>' + topics[i] + '</option>');
+      };
+
+    });
+  </script>
+</head>
+
+<body style="margin-top: 10px; margin-left: 10px; padding:0">
+  <center>
+    <h1>Financial News Trends <i>(Static)</i></h1>
+
+    <div class="date-container">
+      <p>Date Range:  <input type="text" id="daterange" style="width:165px;" /></p>
+      <br>
+    </div>
+    <div class="topic-container">
+      <p>Topic:  <select id="topic">
+      <option value="all">All</option>
+    </select></p>
+    <br>
+    </div>
+    <div class="results">
+      <input type="checkbox" id="daily" value=0>
+      <label for="daily">Daily</label>
+      <input type="checkbox" id="weekly" value=1 checked>
+      <label for="daily">Weekly</label>
+      <br><br>
+      <input type="button" onclick="postData()" value="Submit">
+    </div>
+    <svg width="1200" height="700"></svg>
+    <script>
+      //define chart margins
+      let svg = d3.select("svg"),
+        margin = {
+          top: 50,
+          right: 80,
+          bottom: 40,
+          left: 50
+        },
+        width = svg.attr("width") - margin.left - margin.right,
+        height = svg.attr("height") - margin.top - margin.bottom,
+        g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      //define time format
+      let parseYear = d3.timeParse("%Y%m%d");
+
+      //define scales
+      let x = d3.scaleTime().range([0, width]),
+        y = d3.scaleLinear().range([height, 0]),
+        //color scale
+        z = d3.scaleOrdinal(d3.schemeCategory20);
+
+      //define line generator
+      let line = d3.line()
+        .curve(d3.curveBasis)
+        .x(function(d) {
+          return x(d.date);
+        })
+        .y(function(d) {
+          return y(d.strength);
+        });
+
+      //load data
+      d3.csv("week_records.csv", type, function(error, data) {
+        if (error) throw error;
+
+        //parse data
+        let topics = data.columns.slice(1).map(function(id) {
+          return {
+            id: id,
+            values: data.map(function(d) {
+              return {
+                date: d.date,
+                strength: d[id]
+              };
+            })
+          };
+        });
+
+        //define x axis
+        x.domain(d3.extent(data, function(d) {
+          return d.date;
+        }));
+
+        //define y axis
+        y.domain([
+          d3.min(topics, function(c) {
+            return d3.min(c.values, function(d) {
+              return d.strength;
+            });
+          }),
+          d3.max(topics, function(c) {
+            return d3.max(c.values, function(d) {
+              return d.strength;
+            });
+          })
+        ]);
+
+        //define color scale
+        z.domain(topics.map(function(c) {
+          return c.id;
+        }));
+
+        //append x axis
+        g.append("g")
+          .attr("class", "axis axis-x")
+          .attr("transform", "translate(0," + height + ")")
+          .call(d3.axisBottom(x));
+
+        //append y axis
+        g.append("g")
+          .attr("class", "axis axis-y")
+          .call(d3.axisLeft(y))
+          .append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("y", -50)
+          .attr("x", -125)
+          .attr("dy", "0.9em")
+          .attr("fill", "#000")
+          .text("Topic Strength");
+
+        //append topic data to svg
+        let topic = g.selectAll(".topic")
+          .data(topics)
+          .enter()
+          .append("g")
+          .attr("class", "topic");
+
+        //append topic path to svg
+        topic.append("path")
+          .attr("class", "line")
+          .attr("d", function(d) {
+            return line(d.values);
+          })
+          .style("stroke", function(d) {
+            return z(d.id);
+          })
+          .style("stroke-linecap", "round");
+
+        //append topic labels to svg
+        topic.append("text")
+          .datum(function(d) {
+            return {
+              id: d.id,
+              value: d.values[d.values.length - 1]
+            };
+          })
+          .attr("transform", function(d) {
+            return "translate(" + x(d.value.date) + "," + y(d.value.strength) + ")";
+          })
+          .attr("x", 3)
+          .attr("dy", "0.35em")
+          .style("font", "11px sans-serif")
+          .text(function(d) {
+            return d.id;
+          });
+
+      });
+
+      //bind with multiseries data
+      function type(d, _, columns) {
+        d.date = parseYear(d.date);
+        //iterate through each column
+        for (var i = 1, n = columns.length, c; i < n; ++i)
+          //bind column data to year
+          d[c = columns[i]] = +d[c];
+        return d;
+      }
+
+      //define chart title
+      let title = svg.append("g")
+        .attr("class", "title");
+      title.append("text")
+        .attr("x", (width / 1.8))
+        .attr("y", 80)
+        .attr("text-anchor", "middle")
+        .style("font", "30px sans-serif")
+        .text("Topic Strengths Over Time (Weekly)");
+
+      //define the data source
+      let source = svg.append("g")
+        .attr("class", "source");
+      source.append("text")
+        .attr("x", 0)
+        .attr("y", 790)
+        .attr("text-anchor", "left")
+        .style("font", "12px monospace")
+        .text("Source: Seeking Alpha")
+    </script>
+  </center>
+</body>
