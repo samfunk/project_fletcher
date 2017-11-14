@@ -40,4 +40,6 @@ Finally, using my decomposed matrices and knowing when each document occurred I 
 
 <center><img src="/images/topic_trends.png?raw=true" alt="Info to Stock" align="center" /></center>  
 
+## Moving Forward
+
 A chart like this begs for a time series analysis, which would be the next logical step in my analysis. Other improvements and expansions would include using more data sources, subjects, and types. Sentiment analysis could shed some light on the overall sentiment of the economy and markets for a given time period. I also would like to try utilizing a 3-dimensional NMF model to see how the acutal topics change over time not only measuring the aggregating strengths for a given time period.
